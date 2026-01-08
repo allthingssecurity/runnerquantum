@@ -3,7 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>AIQNex Runner - AI & Quantum Dash</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700&display=swap"
         rel="stylesheet">
@@ -12,21 +15,35 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            touch-action: manipulation;
+            overscroll-behavior: none;
         }
 
         body {
             background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: 'Poppins', sans-serif;
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
         .game-wrapper {
             text-align: center;
+            width: 100%;
+            max-width: 900px;
+            padding: 10px;
         }
 
         h1 {
@@ -50,6 +67,16 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        #game-container canvas {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 60vh;
+            object-fit: contain;
         }
 
         .controls {
@@ -71,37 +98,112 @@
             margin-right: 8px;
         }
 
+        /* Mobile Touch Controls */
         .touch-btns {
             position: fixed;
-            bottom: 30px;
+            bottom: 20px;
             left: 0;
             right: 0;
             display: none;
-            justify-content: center;
-            gap: 40px;
+            justify-content: space-around;
+            padding: 0 20px;
+            z-index: 1000;
         }
 
         .touch-btn {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            background: rgba(255, 153, 51, 0.3);
-            border: 3px solid rgba(255, 153, 51, 0.6);
-            font-size: 28px;
+            background: rgba(255, 153, 51, 0.25);
+            border: 3px solid rgba(255, 153, 51, 0.7);
+            font-size: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            transition: transform 0.1s, background 0.1s;
+            user-select: none;
         }
 
-        .touch-btn:active {
+        .touch-btn:active,
+        .touch-btn.pressed {
             background: rgba(255, 153, 51, 0.6);
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
 
-        @media (max-width: 900px) {
+        .touch-btn.jump-btn {
+            width: 110px;
+            height: 110px;
+            font-size: 40px;
+            background: rgba(19, 136, 8, 0.3);
+            border-color: rgba(19, 136, 8, 0.8);
+        }
+
+        .touch-btn.jump-btn:active,
+        .touch-btn.jump-btn.pressed {
+            background: rgba(19, 136, 8, 0.6);
+        }
+
+        /* Mobile hint overlay */
+        .mobile-hint {
+            display: none;
+            position: fixed;
+            bottom: 130px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        /* Landscape orientation prompt */
+        .rotate-prompt {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 46, 0.98);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .rotate-prompt .rotate-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: rotate-phone 2s ease-in-out infinite;
+        }
+
+        @keyframes rotate-phone {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            50% {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* Mobile Media Queries */
+        @media (max-width: 920px) {
             h1 {
-                font-size: 1.3rem;
+                font-size: 1.4rem;
+            }
+
+            .subtitle {
+                font-size: 0.75rem;
+                margin-bottom: 10px;
             }
 
             .controls {
@@ -110,6 +212,59 @@
 
             .touch-btns {
                 display: flex;
+            }
+
+            .mobile-hint {
+                display: block;
+            }
+
+            #game-container {
+                border-radius: 12px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.1rem;
+            }
+
+            .subtitle {
+                font-size: 0.65rem;
+                letter-spacing: 2px;
+            }
+
+            .touch-btn {
+                width: 75px;
+                height: 75px;
+                font-size: 28px;
+            }
+
+            .touch-btn.jump-btn {
+                width: 95px;
+                height: 95px;
+                font-size: 36px;
+            }
+
+            .game-wrapper {
+                padding: 5px;
+            }
+
+            #game-container {
+                border-radius: 8px;
+            }
+        }
+
+        /* Portrait mode on small screens - suggest landscape */
+        @media (max-width: 600px) and (orientation: portrait) and (max-height: 900px) {
+            .rotate-prompt {
+                display: flex;
+            }
+        }
+
+        /* Hide rotate prompt on tablets and larger */
+        @media (min-width: 768px) {
+            .rotate-prompt {
+                display: none !important;
             }
         }
     </style>
@@ -125,9 +280,26 @@
             <span><span class="key">↓</span> Slide</span>
         </div>
     </div>
+
+    <!-- Mobile Touch Controls -->
     <div class="touch-btns">
         <button class="touch-btn" id="slideBtn">⬇️</button>
-        <button class="touch-btn" id="jumpBtn" style="width:100px;height:100px;font-size:36px;">⬆️</button>
+        <button class="touch-btn jump-btn" id="jumpBtn">⬆️</button>
+    </div>
+
+    <div class="mobile-hint">Tap buttons to Jump or Slide</div>
+
+    <!-- Rotate to Landscape Prompt -->
+    <div class="rotate-prompt" id="rotatePrompt">
+        <div class="rotate-icon">📱</div>
+        <h2 style="font-family: 'Press Start 2P'; font-size: 14px; margin-bottom: 15px;">ROTATE YOUR DEVICE</h2>
+        <p style="max-width: 280px; opacity: 0.8;">For the best gaming experience, please rotate your phone to landscape
+            mode</p>
+        <button onclick="document.getElementById('rotatePrompt').style.display='none'" style="margin-top: 20px; padding: 12px 24px; background: linear-gradient(135deg, #ff9933, #f7b733); 
+                       border: none; border-radius: 8px; font-family: 'Press Start 2P'; font-size: 10px; 
+                       cursor: pointer; color: #1a1a2e;">
+            PLAY ANYWAY
+        </button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
@@ -757,14 +929,55 @@
             }
 
             setupControls() {
+                // Keyboard controls (Desktop)
                 this.input.keyboard.on('keydown-SPACE', () => this.doJump());
                 this.input.keyboard.on('keydown-UP', () => this.doJump());
                 this.input.keyboard.on('keydown-DOWN', () => this.doSlide());
 
-                document.getElementById('jumpBtn')?.addEventListener('touchstart', e => { e.preventDefault(); this.doJump(); });
-                document.getElementById('slideBtn')?.addEventListener('touchstart', e => { e.preventDefault(); this.doSlide(); });
+                // Mobile touch button controls with visual feedback
+                const jumpBtn = document.getElementById('jumpBtn');
+                const slideBtn = document.getElementById('slideBtn');
 
-                this.input.on('pointerdown', p => p.y < H / 2 ? this.doJump() : this.doSlide());
+                if (jumpBtn) {
+                    jumpBtn.addEventListener('touchstart', e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        jumpBtn.classList.add('pressed');
+                        this.doJump();
+                    }, { passive: false });
+                    jumpBtn.addEventListener('touchend', e => {
+                        e.preventDefault();
+                        jumpBtn.classList.remove('pressed');
+                    }, { passive: false });
+                    jumpBtn.addEventListener('click', e => {
+                        e.preventDefault();
+                        this.doJump();
+                    });
+                }
+
+                if (slideBtn) {
+                    slideBtn.addEventListener('touchstart', e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        slideBtn.classList.add('pressed');
+                        this.doSlide();
+                    }, { passive: false });
+                    slideBtn.addEventListener('touchend', e => {
+                        e.preventDefault();
+                        slideBtn.classList.remove('pressed');
+                    }, { passive: false });
+                    slideBtn.addEventListener('click', e => {
+                        e.preventDefault();
+                        this.doSlide();
+                    });
+                }
+
+                // Canvas touch controls (tap top half = jump, bottom half = slide)
+                // Only enable on larger screens where buttons might not show
+                const isMobile = window.matchMedia('(max-width: 920px)').matches;
+                if (!isMobile) {
+                    this.input.on('pointerdown', p => p.y < H / 2 ? this.doJump() : this.doSlide());
+                }
             }
 
             doJump() {
