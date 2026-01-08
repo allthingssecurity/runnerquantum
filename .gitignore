@@ -1,0 +1,8 @@
+# Ignore large folders
+kenney_racing/
+kenney_racing.zip
+farm_game/
+game_builder/
+.DS_Store
+*.DS_Store
+node_modules/

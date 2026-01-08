@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIQNex Runner - AI & Quantum Dash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        .game-wrapper {
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2rem;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #ff9933, #fff, #138808);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+        }
+
+        #game-container {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+        }
+
+        .key {
+            background: linear-gradient(135deg, #ff9933, #f7b733);
+            color: #1a1a2e;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.6rem;
+            margin-right: 8px;
+        }
+
+        .touch-btns {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 153, 51, 0.3);
+            border: 3px solid rgba(255, 153, 51, 0.6);
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .touch-btn:active {
+            background: rgba(255, 153, 51, 0.6);
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 900px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            .controls {
+                display: none;
+            }
+
+            .touch-btns {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-wrapper">
+        <h1>AIQNex RUNNER</h1>
+        <p class="subtitle">AI & QUANTUM DASH</p>
+        <div id="game-container"></div>
+        <div class="controls">
+            <span><span class="key">SPACE</span> Jump</span>
+            <span><span class="key">↓</span> Slide</span>
+        </div>
+    </div>
+    <div class="touch-btns">
+        <button class="touch-btn" id="slideBtn">⬇️</button>
+        <button class="touch-btn" id="jumpBtn" style="width:100px;height:100px;font-size:36px;">⬆️</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script>
+        const W = 900, H = 500, GROUND = 420, PLAYER_X = 150;
+
+        // Level configurations
+        const LEVELS = [
+            { // Level 1: Easy - Neural Networks
+                name: "Neural Networks",
+                targetDistance: 500,
+                baseSpeed: 4,
+                maxSpeed: 8,
+                obstacleDelay: 2200,
+                obstacles: ['cone', 'box', 'barrel', 'rival'],
+                skyColor1: 0x87ceeb,
+                skyColor2: 0x68b8d7,
+                buildingColor: 0x2c3e50,
+                grassColor: 0x4a8c3f
+            },
+            { // Level 2: Medium - Multi-Agent Arena
+                name: "Multi-Agent Arena",
+                targetDistance: 800,
+                baseSpeed: 5,
+                maxSpeed: 10,
+                obstacleDelay: 1800,
+                obstacles: ['cone', 'box', 'barrel', 'rickshaw', 'cart', 'rival'],
+                skyColor1: 0xfdb777,
+                skyColor2: 0xf5a962,
+                buildingColor: 0x34495e,
+                grassColor: 0x5a9c4f
+            },
+            { // Level 3: Hard - Quantum Tunneling
+                name: "Quantum Tunneling",
+                targetDistance: 1200,
+                baseSpeed: 6,
+                maxSpeed: 12,
+                obstacleDelay: 1400,
+                obstacles: ['cone', 'barrier', 'rickshaw', 'scooter', 'rival', 'rival'],
+                skyColor1: 0x2c3e50,
+                skyColor2: 0x1a252f,
+                buildingColor: 0x1a252f,
+                grassColor: 0x3d7a34
+            },
+            { // Level 4: Expert - Entanglement Zone
+                name: "Entanglement Zone",
+                targetDistance: 1500,
+                baseSpeed: 7,
+                maxSpeed: 14,
+                obstacleDelay: 1100,
+                obstacles: ['barrier', 'rival', 'rival', 'pothole', 'dog', 'trash'],
+                skyColor1: 0x0f1923,
+                skyColor2: 0x1a2a3a,
+                buildingColor: 0x0a1015,
+                grassColor: 0x2d5a24
+            },
+            { // Level 5: Insane - Singularity Rush
+                name: "Singularity Rush",
+                targetDistance: 2000,
+                baseSpeed: 8,
+                maxSpeed: 16,
+                obstacleDelay: 900,
+                obstacles: ['barrier', 'rival', 'rival', 'rival', 'scooter', 'pothole', 'dog', 'trash', 'cow'],
+                skyColor1: 0xff9966,
+                skyColor2: 0xff5e62,
+                buildingColor: 0x2c3e50,
+                grassColor: 0x4a8c3f
+            }
+        ];
+
+        const QUANTUM_CONCEPTS = [
+            { title: "SUPERPOSITION", desc: "A particle exists in\nmultiple states at once\nuntil measured." },
+            { title: "ENTANGLEMENT", desc: "Two particles linked\nacross space affecting\neach other instantly." },
+            { title: "SCHRODINGER'S CAT", desc: "A thought experiment:\nIs the cat dead or alive\nbefore you look?" },
+            { title: "WAVE FUNCTION", desc: "Mathematical description\nof the quantum state\nof a system." },
+            { title: "TUNNELING", desc: "Particles passing through\nbarriers they shouldn't\nbe able to cross." },
+            { title: "HEISENBERG", desc: "You cannot know both\nposition and momentum\nperfectly." }
+        ];
+
+        // Agentic AI Concepts
+        const AGENTIC_AI_CONCEPTS = [
+            { title: "AI AGENTS", desc: "Autonomous AI systems\nthat perceive, reason,\nand take actions." },
+            { title: "MULTI-AGENT SYSTEMS", desc: "Multiple AI agents\nworking together to\nsolve complex problems." },
+            { title: "TOOL USE", desc: "AI agents that can\nuse external tools\nto accomplish goals." },
+            { title: "REASONING", desc: "Step-by-step logical\nthinking to solve\ncomplex problems." },
+            { title: "PLANNING", desc: "AI breaks down goals\ninto actionable steps\nfor execution." },
+            { title: "MEMORY & CONTEXT", desc: "Agents maintain context\nacross interactions for\ncontinuity." },
+            { title: "AUTONOMOUS WORKFLOW", desc: "AI orchestrates complex\ntasks with minimal\nhuman intervention." },
+            { title: "FUNCTION CALLING", desc: "AI invokes APIs and\nfunctions to interact\nwith the world." }
+        ];
+
+        // Combined concepts for billboards
+        const BILLBOARD_CONCEPTS = [...QUANTUM_CONCEPTS, ...AGENTIC_AI_CONCEPTS];
+
+        // ==========================================
+        // SOUND MANAGER (Web Audio API)
+        // ==========================================
+        class SoundManager {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio not supported');
+                    this.enabled = false;
+                }
+            }
+
+            resume() {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            play(type) {
+                if (!this.enabled || !this.ctx) return;
+                this.resume();
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                const now = this.ctx.currentTime;
+
+                switch (type) {
+                    case 'jump':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(400, now);
+                        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                        gain.gain.setValueAtTime(0.3, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                        osc.start(now);
+                        osc.stop(now + 0.15);
+                        break;
+
+                    case 'coin':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(880, now);
+                        osc.frequency.setValueAtTime(1100, now + 0.05);
+                        gain.gain.setValueAtTime(0.2, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                        osc.start(now);
+                        osc.stop(now + 0.2);
+                        break;
+
+                    case 'hit':
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(200, now);
+                        osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                        gain.gain.setValueAtTime(0.4, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        osc.start(now);
+                        osc.stop(now + 0.3);
+                        break;
+
+                    case 'powerup':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(500, now);
+                        osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+                        osc.frequency.exponentialRampToValueAtTime(1500, now + 0.2);
+                        gain.gain.setValueAtTime(0.25, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        osc.start(now);
+                        osc.stop(now + 0.3);
+                        break;
+
+                    case 'levelup':
+                        // Arpeggio
+                        const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+                        notes.forEach((freq, i) => {
+                            const o = this.ctx.createOscillator();
+                            const g = this.ctx.createGain();
+                            o.connect(g);
+                            g.connect(this.ctx.destination);
+                            o.type = 'sine';
+                            o.frequency.value = freq;
+                            g.gain.setValueAtTime(0.2, now + i * 0.1);
+                            g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+                            o.start(now + i * 0.1);
+                            o.stop(now + i * 0.1 + 0.3);
+                        });
+                        break;
+
+                    case 'gameover':
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(400, now);
+                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+                        gain.gain.setValueAtTime(0.3, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                        osc.start(now);
+                        osc.stop(now + 0.6);
+                        break;
+
+                    case 'click':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(600, now);
+                        gain.gain.setValueAtTime(0.15, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                        osc.start(now);
+                        osc.stop(now + 0.05);
+                        break;
+                }
+            }
+        }
+
+        const sound = new SoundManager();
+
+        // ==========================================
+        // MENU SCENE
+        // ==========================================
+        class MenuScene extends Phaser.Scene {
+            constructor() { super('Menu'); }
+
+            create() {
+                // Initialize sound on first user interaction
+                sound.init();
+
+                // Background
+                const bg = this.add.graphics();
+                bg.fillGradientStyle(0x1a1a2e, 0x1a1a2e, 0x16213e, 0x16213e);
+                bg.fillRect(0, 0, W, H);
+
+                // Title
+                this.add.text(W / 2, 100, 'AIQNex RUNNER', {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '38px',
+                    color: '#ff9933',
+                    stroke: '#000',
+                    strokeThickness: 6
+                }).setOrigin(0.5);
+
+                this.add.text(W / 2, 150, 'AI & QUANTUM DASH', {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '18px',
+                    color: '#138808'
+                }).setOrigin(0.5);
+
+                // Animated player preview (simple rectangle for now)
+                const preview = this.add.graphics();
+                preview.fillStyle(0x3498db);
+                preview.fillRect(W / 2 - 20, 200, 40, 60);
+
+                this.tweens.add({
+                    targets: preview,
+                    y: -10,
+                    duration: 500,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+
+                // High score
+                const hs = localStorage.getItem('kejriHS') || 0;
+                const maxLevel = localStorage.getItem('kejriMaxLevel') || 1;
+
+                this.add.text(W / 2, 300, `🏆 HIGH SCORE: ${hs}`, {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '14px',
+                    color: '#ffd700'
+                }).setOrigin(0.5);
+
+                this.add.text(W / 2, 330, `📍 MAX LEVEL: ${maxLevel}`, {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '12px',
+                    color: '#87ceeb'
+                }).setOrigin(0.5);
+
+                // Play button
+                const btn = this.add.rectangle(W / 2, 400, 200, 60, 0x138808);
+                btn.setStrokeStyle(4, 0xffffff, 0.3);
+                btn.setInteractive({ useHandCursor: true });
+
+                this.add.text(W / 2, 400, 'START GAME', {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '14px',
+                    color: '#ffffff'
+                }).setOrigin(0.5);
+
+                btn.on('pointerover', () => btn.setFillStyle(0x1a9f1a));
+                btn.on('pointerout', () => btn.setFillStyle(0x138808));
+                btn.on('pointerdown', () => { sound.play('click'); this.scene.start('Game', { level: 0 }); });
+
+                // Space to start
+                this.input.keyboard.on('keydown-SPACE', () => { sound.play('click'); this.scene.start('Game', { level: 0 }); });
+
+                // Instructions
+                this.add.text(W / 2, 470, 'SPACE = Jump  |  ↓ = Slide  |  Collect coins, avoid obstacles!', {
+                    fontFamily: 'Poppins',
+                    fontSize: '11px',
+                    color: '#888'
+                }).setOrigin(0.5);
+            }
+        }
+
+        // ==========================================
+        // MAIN GAME SCENE
+        // ==========================================
+        class GameScene extends Phaser.Scene {
+            constructor() { super('Game'); }
+
+            init(data) {
+                this.currentLevel = data.level || 0;
+                this.levelConfig = LEVELS[this.currentLevel];
+                this.score = data.score || 0;
+                this.lives = data.lives !== undefined ? data.lives : 5;
+                this.distance = 0;
+                this.speed = this.levelConfig.baseSpeed;
+                this.gameOver = false;
+                this.jumping = false;
+                this.sliding = false;
+                this.invincible = false;
+            }
+
+            preload() {
+                const ts = Date.now();
+                // Deepak Run: 1536x1024 (4 cols x 2 rows) -> 384x512 per frame
+                this.load.spritesheet('run', `assets/sprites/deepak_run_clean.png?v=${ts}`, {
+                    frameWidth: 384, frameHeight: 512
+                });
+                // Use same sprite for jump animation (reuse frames)
+                this.load.spritesheet('jump', `assets/sprites/deepak_run_clean.png?v=${ts}`, {
+                    frameWidth: 384, frameHeight: 512
+                });
+
+                // New Premium Buildings
+                this.load.image('buildings', `assets/sprites/buildings_clean.png?v=${ts}`);
+
+                // AIQNEX Logo for billboards
+                this.load.image('aiqnex_logo', `assets/sprites/aiqnex_logo.png?v=${ts}`);
+
+                // Rival (Blue Shirt Kejri)
+                this.load.spritesheet('rival_hop', `assets/sprites/kejri_hop_clean.png?v=${ts}`, {
+                    frameWidth: 300, frameHeight: 300
+                });
+            }
+
+            create() {
+                const cfg = this.levelConfig;
+
+                // === LEVEL START ANNOUNCEMENT ===
+                this.showLevelStart();
+
+                // === DYNAMIC BACKGROUND ===
+                const sky = this.add.graphics();
+                sky.fillGradientStyle(cfg.skyColor1, cfg.skyColor1, cfg.skyColor2, cfg.skyColor2);
+                sky.fillRect(0, 0, W, GROUND - 80);
+
+                // Premium Buildings (Parallax Layer)
+                // We use a TileSprite to make it scroll infinitely
+                this.bgBuildings = this.add.tileSprite(W / 2, GROUND - 40, W, 322, 'buildings');
+                this.bgBuildings.setOrigin(0.5, 1); // Anchor to bottom
+                this.bgBuildings.setScale(0.9); // Slightly larger since it's the only background now
+
+                // Tint to match level atmosphere (slightly dark for night levels)
+                if (this.currentLevel >= 3) this.bgBuildings.setTint(0x888888);
+                else this.bgBuildings.setTint(0xffffff);
+
+                // Ground
+                const grass = this.add.graphics();
+                grass.fillStyle(cfg.grassColor);
+                grass.fillRect(0, GROUND - 80, W, 40);
+                grass.fillStyle(cfg.grassColor - 0x101010);
+                grass.fillRect(0, GROUND - 40, W, 10);
+
+                // Road
+                const road = this.add.graphics();
+                road.fillStyle(0x4a4a4a);
+                road.fillRect(0, GROUND - 30, W, H - GROUND + 50);
+
+                // Road lines
+                this.roadLines = [];
+                for (let i = 0; i < 15; i++) {
+                    const line = this.add.rectangle(i * 80 - 40, GROUND + 20, 50, 6, 0xf0c040);
+                    this.roadLines.push(line);
+                }
+
+                // Road edge
+                this.add.rectangle(W / 2, GROUND - 28, W, 3, 0xffffff);
+
+                // === ANIMATIONS ===
+                if (!this.anims.exists('run')) {
+                    this.anims.create({
+                        key: 'run',
+                        frames: this.anims.generateFrameNumbers('run', { start: 0, end: 7 }),
+                        frameRate: 14,
+                        repeat: -1
+                    });
+                    this.anims.create({
+                        key: 'jump',
+                        frames: this.anims.generateFrameNumbers('jump', { start: 4, end: 7 }),
+                        frameRate: 12,
+                        repeat: 0
+                    });
+
+                    // Rival Animations
+                    this.anims.create({
+                        key: 'rival_hop',
+                        frames: this.anims.generateFrameNumbers('rival_hop', { start: 0, end: 1 }),
+                        frameRate: 4, // Slower frame rate for clear Up-Down motion
+                        repeat: -1
+                    });
+                }
+
+                // === PLAYER ===
+                this.player = this.physics.add.sprite(PLAYER_X, GROUND - 35, 'run');
+                this.player.setOrigin(0.5, 1);
+                this.player.setScale(0.18); // Adjusted for larger 384x512 sprite
+                this.player.body.setGravityY(1800);
+                this.player.body.setSize(240, 450); // Adjusted hitbox for larger sprite
+                this.player.body.setOffset(70, 50);
+                this.player.setDepth(100);
+                this.player.play('run');
+
+                // Shadow
+                this.shadow = this.add.ellipse(PLAYER_X, GROUND - 28, 40, 12, 0x000000, 0.4).setDepth(99);
+
+                // Ground physics
+                this.ground = this.add.rectangle(W / 2, GROUND, W * 2, 30, 0x000000, 0);
+                this.physics.add.existing(this.ground, true);
+                this.physics.add.collider(this.player, this.ground, () => {
+                    if (this.jumping) {
+                        this.jumping = false;
+                        this.player.play('run');
+                        this.player.setScale(0.18); // Reset scale
+                    }
+                });
+
+                // === GROUPS ===
+                this.obstacles = this.physics.add.group();
+                // Use processCallback for more reliable collision
+                this.physics.add.overlap(this.player, this.obstacles, this.hit, (player, obstacle) => {
+                    // Extra check: only collide if horizontally overlapping
+                    const pLeft = player.x - player.body.width / 2;
+                    const pRight = player.x + player.body.width / 2;
+                    const oLeft = obstacle.x - obstacle.body.width / 2;
+                    const oRight = obstacle.x + obstacle.body.width / 2;
+                    return pRight > oLeft && pLeft < oRight;
+                }, this);
+
+                this.coins = this.physics.add.group();
+                this.physics.add.overlap(this.player, this.coins, this.collect, null, this);
+
+                this.powerups = this.physics.add.group();
+                this.physics.add.overlap(this.player, this.powerups, this.getPowerup, null, this);
+
+                // Billboards (Visual only, no physics)
+                this.billboards = this.add.group();
+
+                // === UI ===
+                this.createUI();
+
+                // === CONTROLS ===
+                this.setupControls();
+
+                // === SPAWN TIMERS ===
+                this.time.delayedCall(2000, () => {
+                    this.obstacleTimer = this.time.addEvent({
+                        delay: cfg.obstacleDelay,
+                        callback: this.spawnObstacle,
+                        callbackScope: this,
+                        loop: true
+                    });
+
+                    this.coinTimer = this.time.addEvent({
+                        delay: 2000,
+                        callback: this.spawnCoin,
+                        callbackScope: this,
+                        loop: true
+                    });
+
+                    this.powerupTimer = this.time.addEvent({
+                        delay: 15000,
+                        callback: this.spawnPowerup,
+                        callbackScope: this,
+                        loop: true
+                    });
+
+                    this.billboardTimer = this.time.addEvent({
+                        delay: 5000, // More frequent billboards for AIQNex branding
+                        callback: this.spawnBillboard,
+                        callbackScope: this,
+                        loop: true
+                    });
+                });
+            }
+
+            showLevelStart() {
+                const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.8).setDepth(500);
+
+                const levelText = this.add.text(W / 2, H / 2 - 40, `LEVEL ${this.currentLevel + 1}`, {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '32px',
+                    color: '#ffd700'
+                }).setOrigin(0.5).setDepth(501);
+
+                const nameText = this.add.text(W / 2, H / 2 + 10, this.levelConfig.name.toUpperCase(), {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '18px',
+                    color: '#ffffff'
+                }).setOrigin(0.5).setDepth(501);
+
+                const targetText = this.add.text(W / 2, H / 2 + 50, `Target: ${this.levelConfig.targetDistance}m`, {
+                    fontFamily: 'Poppins',
+                    fontSize: '14px',
+                    color: '#aaa'
+                }).setOrigin(0.5).setDepth(501);
+
+                // Fade out after 1.5 seconds
+                this.time.delayedCall(1500, () => {
+                    this.tweens.add({
+                        targets: [overlay, levelText, nameText, targetText],
+                        alpha: 0,
+                        duration: 500,
+                        onComplete: () => {
+                            overlay.destroy();
+                            levelText.destroy();
+                            nameText.destroy();
+                            targetText.destroy();
+                        }
+                    });
+                });
+            }
+
+            createBuildings(color) {
+                const city = this.add.graphics();
+
+                // Different building patterns per level
+                const patterns = [
+                    // Level 1: Simple buildings
+                    [{ x: 50, w: 60, h: 80 }, { x: 130, w: 40, h: 120 }, { x: 190, w: 70, h: 90 },
+                    { x: 280, w: 50, h: 140 }, { x: 350, w: 45, h: 70 }, { x: 420, w: 80, h: 110 },
+                    { x: 520, w: 55, h: 85 }, { x: 600, w: 65, h: 130 }, { x: 690, w: 50, h: 95 },
+                    { x: 760, w: 70, h: 75 }, { x: 850, w: 60, h: 105 }],
+                    // Level 2: Denser
+                    [{ x: 30, w: 50, h: 100 }, { x: 90, w: 45, h: 140 }, { x: 145, w: 55, h: 110 },
+                    { x: 210, w: 40, h: 160 }, { x: 260, w: 60, h: 90 }, { x: 335, w: 50, h: 130 },
+                    { x: 400, w: 70, h: 100 }, { x: 485, w: 45, h: 150 }, { x: 545, w: 55, h: 120 },
+                    { x: 615, w: 65, h: 140 }, { x: 695, w: 50, h: 110 }, { x: 760, w: 60, h: 135 },
+                    { x: 835, w: 55, h: 95 }],
+                    // Level 3: Tall skyscrapers
+                    [{ x: 40, w: 60, h: 180 }, { x: 120, w: 50, h: 220 }, { x: 190, w: 70, h: 160 },
+                    { x: 280, w: 55, h: 250 }, { x: 360, w: 65, h: 190 }, { x: 450, w: 80, h: 230 },
+                    { x: 550, w: 60, h: 200 }, { x: 630, w: 70, h: 260 }, { x: 720, w: 55, h: 180 },
+                    { x: 800, w: 65, h: 210 }, { x: 880, w: 50, h: 170 }],
+                    // Level 4: Night city with lights
+                    [{ x: 30, w: 70, h: 200 }, { x: 120, w: 60, h: 280 }, { x: 200, w: 80, h: 220 },
+                    { x: 300, w: 65, h: 300 }, { x: 390, w: 75, h: 250 }, { x: 490, w: 90, h: 270 },
+                    { x: 600, w: 70, h: 230 }, { x: 690, w: 80, h: 290 }, { x: 790, w: 65, h: 200 }],
+                    // Level 5: Metro/futuristic
+                    [{ x: 20, w: 80, h: 250 }, { x: 120, w: 70, h: 320 }, { x: 210, w: 90, h: 280 },
+                    { x: 320, w: 75, h: 350 }, { x: 420, w: 85, h: 300 }, { x: 530, w: 100, h: 330 },
+                    { x: 650, w: 80, h: 270 }, { x: 750, w: 90, h: 310 }, { x: 860, w: 70, h: 250 }]
+                ];
+
+                const buildings = patterns[Math.min(this.currentLevel, patterns.length - 1)];
+
+                buildings.forEach(b => {
+                    city.fillStyle(color, 0.8);
+                    city.fillRect(b.x, GROUND - 80 - b.h, b.w, b.h);
+
+                    // Windows (lit at night levels)
+                    const windowColor = this.currentLevel >= 3 ? 0xffeaa7 : 0xffeaa7;
+                    const windowAlpha = this.currentLevel >= 3 ? 0.7 : 0.3;
+                    city.fillStyle(windowColor, windowAlpha);
+
+                    for (let wy = 10; wy < b.h - 10; wy += 15) {
+                        for (let wx = 5; wx < b.w - 10; wx += 12) {
+                            if (Math.random() > (this.currentLevel >= 3 ? 0.2 : 0.4)) {
+                                city.fillRect(b.x + wx, GROUND - 80 - b.h + wy, 6, 8);
+                            }
+                        }
+                    }
+                });
+            }
+
+            createUI() {
+                // UI Panel
+                const panel = this.add.graphics();
+                panel.fillStyle(0x000000, 0.75);
+                panel.fillRoundedRect(10, 10, 200, 85, 10);
+                panel.setDepth(200);
+
+                // Level
+                this.add.text(20, 15, `LVL ${this.currentLevel + 1}: ${this.levelConfig.name}`, {
+                    fontFamily: 'Poppins',
+                    fontSize: '10px',
+                    color: '#87ceeb'
+                }).setDepth(200);
+
+                // Score
+                this.add.text(20, 30, '⭐ SCORE', { fontFamily: 'Poppins', fontSize: '10px', color: '#aaa' }).setDepth(200);
+                this.scoreTxt = this.add.text(20, 42, this.score.toString(), {
+                    fontFamily: '"Press Start 2P"', fontSize: '16px', color: '#ffd700'
+                }).setDepth(200);
+
+                // Distance
+                this.add.text(120, 30, '📏 DISTANCE', { fontFamily: 'Poppins', fontSize: '10px', color: '#aaa' }).setDepth(200);
+                this.distTxt = this.add.text(120, 42, '0m', {
+                    fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#87ceeb'
+                }).setDepth(200);
+
+                // Target
+                this.add.text(20, 65, `Target: ${this.levelConfig.targetDistance}m`, {
+                    fontFamily: 'Poppins', fontSize: '10px', color: '#666'
+                }).setDepth(200);
+
+                // Progress bar
+                this.progressBg = this.add.rectangle(120, 73, 80, 8, 0x333333).setDepth(200);
+                this.progressBar = this.add.rectangle(80, 73, 0, 6, 0x00ff00).setOrigin(0, 0.5).setDepth(201);
+
+                // Lives (hearts)
+                this.livesGroup = this.add.group();
+                for (let i = 0; i < this.lives; i++) {
+                    const heart = this.add.text(W - 40 - (i * 30), 20, '❤️', { fontSize: '22px' }).setDepth(200);
+                    this.livesGroup.add(heart);
+                }
+
+                // Speed
+                this.speedTxt = this.add.text(W - 70, 50, '1.0x', {
+                    fontFamily: '"Press Start 2P"', fontSize: '11px', color: '#ff6b6b'
+                }).setDepth(200);
+            }
+
+            setupControls() {
+                this.input.keyboard.on('keydown-SPACE', () => this.doJump());
+                this.input.keyboard.on('keydown-UP', () => this.doJump());
+                this.input.keyboard.on('keydown-DOWN', () => this.doSlide());
+
+                document.getElementById('jumpBtn')?.addEventListener('touchstart', e => { e.preventDefault(); this.doJump(); });
+                document.getElementById('slideBtn')?.addEventListener('touchstart', e => { e.preventDefault(); this.doSlide(); });
+
+                this.input.on('pointerdown', p => p.y < H / 2 ? this.doJump() : this.doSlide());
+            }
+
+            doJump() {
+                if (this.gameOver || this.jumping) return;
+                if (this.player.body.touching.down || this.player.body.blocked.down) {
+                    this.jumping = true;
+                    this.player.body.setVelocityY(-750);
+                    this.player.play('jump');
+                    // Same sprite dimensions, keep consistent scale
+                    this.player.setScale(0.18);
+                    sound.play('jump');
+                }
+            }
+
+            doSlide() {
+                if (this.gameOver || this.sliding || this.jumping) return;
+                this.sliding = true;
+                this.player.setScale(0.22, 0.09); // Flatten sprite for slide
+                this.player.body.setSize(300, 150);
+                this.player.body.setOffset(40, 360);
+
+                this.time.delayedCall(550, () => {
+                    if (!this.gameOver) {
+                        this.sliding = false;
+                        this.player.setScale(0.18); // Restore normal scale
+                        this.player.body.setSize(240, 450);
+                        this.player.body.setOffset(70, 50);
+                    }
+                });
+            }
+
+            spawnObstacle() {
+                if (this.gameOver) return;
+
+                const type = Phaser.Math.RND.pick(this.levelConfig.obstacles);
+                const container = this.add.container(W + 100, GROUND - 30);
+                const g = this.add.graphics();
+
+                let hitW, hitH;
+
+                switch (type) {
+                    case 'cone':
+                        g.fillStyle(0xff6600);
+                        g.beginPath();
+                        g.moveTo(0, -45);
+                        g.lineTo(18, -5);
+                        g.lineTo(-18, -5);
+                        g.closePath();
+                        g.fillPath();
+                        g.lineStyle(4, 0xffffff);
+                        g.lineBetween(-10, -20, 10, -20);
+                        g.lineBetween(-14, -12, 14, -12);
+                        g.fillStyle(0x333333);
+                        g.fillRect(-22, -5, 44, 8);
+                        hitW = 40; hitH = 50;
+                        break;
+
+                    case 'barrier':
+                        g.fillStyle(0xcc0000);
+                        g.fillRect(-25, -55, 50, 55);
+                        g.fillStyle(0xffffff);
+                        g.fillRect(-25, -55, 50, 12);
+                        g.fillRect(-25, -31, 50, 12);
+                        g.fillStyle(0x333333);
+                        g.fillRect(-22, -5, 8, 35);
+                        g.fillRect(14, -5, 8, 35);
+                        hitW = 50; hitH = 60;
+                        break;
+
+                    case 'box':
+                        g.fillStyle(0xc4a35a);
+                        g.fillRect(-20, -40, 40, 40);
+                        g.lineStyle(2, 0x8b7355);
+                        g.strokeRect(-20, -40, 40, 40);
+                        g.fillStyle(0xd4a76a);
+                        g.fillRect(-3, -40, 6, 40);
+                        hitW = 40; hitH = 40;
+                        break;
+
+                    case 'barrel':
+                        g.fillStyle(0xcc3300);
+                        g.fillRoundedRect(-15, -50, 30, 50, 5);
+                        g.fillStyle(0x992200);
+                        g.fillRect(-15, -45, 30, 5);
+                        g.fillRect(-15, -25, 30, 5);
+                        g.fillRect(-15, -10, 30, 5);
+                        hitW = 30; hitH = 50;
+                        break;
+
+                    case 'rickshaw':
+                        g.fillStyle(0x2ecc71);
+                        g.fillRoundedRect(-30, -55, 55, 35, 5);
+                        g.fillStyle(0xf1c40f);
+                        g.fillRoundedRect(-28, -70, 50, 18, 5);
+                        g.fillStyle(0x333333);
+                        g.fillCircle(-20, -10, 12);
+                        g.fillCircle(18, -10, 12);
+                        g.fillStyle(0x666666);
+                        g.fillCircle(-20, -10, 6);
+                        g.fillCircle(18, -10, 6);
+                        g.fillStyle(0x87ceeb);
+                        g.fillRect(-25, -52, 20, 15);
+                        hitW = 55; hitH = 65;
+                        break;
+
+                    case 'cart':
+                        g.fillStyle(0x8b4513);
+                        g.fillRect(-25, -35, 50, 30);
+                        g.fillStyle(0x654321);
+                        g.fillRect(-25, -35, 50, 5);
+                        g.fillStyle(0x333333);
+                        g.fillCircle(-15, -5, 8);
+                        g.fillCircle(15, -5, 8);
+                        // Fruits/vegetables
+                        g.fillStyle(0xff6347);
+                        g.fillCircle(-10, -25, 6);
+                        g.fillCircle(5, -28, 5);
+                        g.fillStyle(0x32cd32);
+                        g.fillCircle(15, -25, 6);
+                        hitW = 50; hitH = 40;
+                        break;
+
+                    case 'scooter':
+                        g.fillStyle(0x3498db);
+                        g.fillRoundedRect(-20, -50, 40, 30, 5);
+                        g.fillStyle(0x2980b9);
+                        g.fillRect(-15, -25, 30, 15);
+                        g.fillStyle(0x333333);
+                        g.fillCircle(-12, -5, 10);
+                        g.fillCircle(12, -5, 10);
+                        g.fillStyle(0xc0c0c0);
+                        g.fillRect(15, -55, 5, 20);
+                        hitW = 40; hitH = 55;
+                        break;
+
+                    case 'pothole':
+                        container.y = GROUND - 5;
+                        g.fillStyle(0x222222);
+                        g.fillEllipse(0, 0, 50, 15);
+                        g.fillStyle(0x111111);
+                        g.fillEllipse(0, 2, 40, 10);
+                        hitW = 50; hitH = 20;
+                        break;
+
+                    case 'dog':
+                        g.fillStyle(0x8b4513);
+                        g.fillEllipse(0, -25, 35, 20);
+                        g.fillCircle(-20, -35, 12);
+                        g.fillStyle(0x654321);
+                        g.fillCircle(-25, -38, 4);
+                        g.fillCircle(-15, -38, 4);
+                        g.fillStyle(0x000000);
+                        g.fillCircle(-22, -33, 2);
+                        g.fillStyle(0x333333);
+                        g.fillRect(-5, -10, 6, 15);
+                        g.fillRect(10, -10, 6, 15);
+                        hitW = 40; hitH = 40;
+                        break;
+
+                    case 'trash':
+                        g.fillStyle(0x555555);
+                        g.fillRect(-18, -50, 36, 50);
+                        g.fillStyle(0x444444);
+                        g.fillRect(-20, -55, 40, 8);
+                        g.fillStyle(0x666666);
+                        g.fillRect(-18, -45, 36, 5);
+                        g.fillRect(-18, -30, 36, 5);
+                        hitW = 36; hitH = 55;
+                        break;
+
+                    case 'cow':
+                        g.fillStyle(0xffffff);
+                        g.fillEllipse(0, -30, 50, 30);
+                        g.fillCircle(-30, -35, 15);
+                        g.fillStyle(0x8b4513);
+                        g.fillCircle(-30, -30, 5);
+                        g.fillCircle(-25, -10, 4);
+                        g.fillCircle(25, -10, 4);
+                        g.fillStyle(0x000000);
+                        g.fillCircle(-35, -38, 2);
+                        g.fillStyle(0x777777);
+                        g.fillRect(-10, -5, 5, 15);
+                        g.fillRect(10, -5, 5, 15);
+                        hitW = 55; hitH = 45;
+                        break;
+
+                    case 'rival':
+                        const rival = this.add.sprite(0, -35, 'rival_hop'); // Use Hop Sprite
+                        rival.setScale(0.25); // Match Runner Size (0.25)
+                        rival.play('rival_hop');
+                        // No tint needed (sprite is already blue)
+                        container.add(rival);
+
+                        // Smaller hitbox for forgiveness
+                        hitW = 30; hitH = 50;
+
+                        // Jumping Logic (Easier)
+                        this.tweens.add({
+                            targets: container,
+                            y: container.y - 40, // Much lower jump for easier gameplay
+                            duration: 600,
+                            yoyo: true,
+                            repeat: -1,
+                            ease: 'Sine.easeOut',
+                            delay: 1200 // Stay on ground longer (was random 0-800)
+                        });
+                        break;
+
+                    default:
+                        g.fillStyle(0xff0000);
+                        g.fillRect(-20, -40, 40, 40);
+                        hitW = 40; hitH = 40;
+                }
+
+                container.add(g);
+                container.setDepth(50);
+
+                this.physics.add.existing(container);
+                // Slightly larger hitbox for reliable collision
+                const hitWAdj = Math.floor(hitW * 1.2);
+                const hitHAdj = Math.floor(hitH * 1.2);
+                container.body.setSize(hitWAdj, hitHAdj);
+                container.body.setOffset(-hitWAdj / 2, -hitHAdj);
+                container.body.setAllowGravity(false);
+                container.body.setImmovable(true);
+                container.body.setVelocityX(-this.speed * 55);
+
+                this.obstacles.add(container);
+                container.obstacleType = type;
+
+                // Spawn double obstacles at higher levels
+                if (this.currentLevel >= 2 && Math.random() < 0.2) {
+                    this.time.delayedCall(600, () => {
+                        if (!this.gameOver) this.spawnObstacle();
+                    });
+                }
+            }
+
+            spawnCoin() {
+                if (this.gameOver) return;
+
+                const count = Phaser.Math.Between(1, 3);
+                for (let i = 0; i < count; i++) {
+                    const x = W + 50 + (i * 45);
+                    const y = Phaser.Math.Between(GROUND - 130, GROUND - 50);
+
+                    const coinContainer = this.add.container(x, y);
+                    const coinG = this.add.graphics();
+                    coinG.fillStyle(0xffd700);
+                    coinG.fillCircle(0, 0, 14);
+                    coinG.lineStyle(2, 0xcc9900);
+                    coinG.strokeCircle(0, 0, 14);
+
+                    const symbol = this.add.text(0, 0, '₹', {
+                        fontFamily: 'Poppins', fontSize: '14px', color: '#996600', fontStyle: 'bold'
+                    }).setOrigin(0.5);
+
+                    coinContainer.add([coinG, symbol]);
+
+                    this.physics.add.existing(coinContainer);
+                    coinContainer.body.setCircle(14);
+                    coinContainer.body.setOffset(-14, -14);
+                    coinContainer.body.setAllowGravity(false);
+                    coinContainer.body.setVelocityX(-this.speed * 55);
+
+                    this.coins.add(coinContainer);
+                }
+            }
+
+            spawnPowerup() {
+                if (this.gameOver) return;
+
+                const type = Phaser.Math.RND.pick(['shield', 'heart', 'magnet']);
+                const container = this.add.container(W + 50, Phaser.Math.Between(GROUND - 150, GROUND - 80));
+                const g = this.add.graphics();
+
+                switch (type) {
+                    case 'shield':
+                        g.fillStyle(0x3498db);
+                        g.beginPath();
+                        g.moveTo(0, -20);
+                        g.lineTo(15, -10);
+                        g.lineTo(15, 5);
+                        g.lineTo(0, 18);
+                        g.lineTo(-15, 5);
+                        g.lineTo(-15, -10);
+                        g.closePath();
+                        g.fillPath();
+                        g.lineStyle(3, 0xffffff);
+                        g.strokePath();
+                        break;
+                    case 'heart':
+                        g.fillStyle(0xff4444);
+                        g.fillCircle(-8, -8, 10);
+                        g.fillCircle(8, -8, 10);
+                        g.beginPath();
+                        g.moveTo(-18, -5);
+                        g.lineTo(0, 18);
+                        g.lineTo(18, -5);
+                        g.closePath();
+                        g.fillPath();
+                        break;
+                    case 'magnet':
+                        g.fillStyle(0xcc0000);
+                        g.fillRoundedRect(-15, -15, 15, 30, 3);
+                        g.fillStyle(0x0000cc);
+                        g.fillRoundedRect(0, -15, 15, 30, 3);
+                        g.fillStyle(0xaaaaaa);
+                        g.fillRect(-5, -5, 10, 10);
+                        break;
+                }
+
+                container.add(g);
+                container.powerType = type;
+
+                this.physics.add.existing(container);
+                container.body.setCircle(20);
+                container.body.setOffset(-20, -20);
+                container.body.setAllowGravity(false);
+                container.body.setVelocityX(-this.speed * 55);
+
+                this.powerups.add(container);
+
+                // Floating animation
+                this.tweens.add({
+                    targets: container,
+                    y: container.y - 15,
+                    duration: 600,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+
+            spawnBillboard() {
+                if (this.gameOver) return;
+
+                // Spawn high up in the background
+                const y = GROUND - 280;
+                const container = this.add.container(W + 200, y);
+
+                const w = 320, h = 130;
+                const g = this.add.graphics();
+
+                // Support Legs (Rooftop style)
+                g.fillStyle(0x333333);
+                g.fillRect(-w / 2 + 20, h / 2, 10, 50);
+                g.fillRect(w / 2 - 30, h / 2, 10, 50);
+                // Cross bracing
+                g.lineStyle(2, 0x333333);
+                g.lineBetween(-w / 2 + 20, h / 2, w / 2 - 30, h / 2 + 50);
+                g.lineBetween(-w / 2 + 20, h / 2 + 50, w / 2 - 30, h / 2);
+
+                // Main Board Frame with gradient effect
+                g.fillStyle(0x0a1628);
+                g.fillRoundedRect(-w / 2, -h / 2, w, h, 8);
+                g.lineStyle(4, 0x3366ff);
+                g.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
+
+                // Inner glow border
+                g.lineStyle(2, 0x00ffff, 0.3);
+                g.strokeRoundedRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 6);
+
+                // Decide if showing logo or concept (30% chance for logo)
+                const showLogo = Math.random() < 0.6; // 60% chance for AIQNex branding
+
+                if (showLogo) {
+                    // Display AIQNEX Logo prominently
+                    const logo = this.add.image(0, -5, 'aiqnex_logo');
+                    logo.setDisplaySize(w - 30, h - 30);
+
+                    // Pulsing glow effect for logo
+                    this.tweens.add({
+                        targets: logo,
+                        scale: { from: logo.scaleX, to: logo.scaleX * 1.05 },
+                        alpha: { from: 1, to: 0.9 },
+                        duration: 1200,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+
+                    container.add([g, logo]);
+                } else {
+                    // Pick from combined concepts (Quantum + Agentic AI)
+                    const concept = Phaser.Math.RND.pick(BILLBOARD_CONCEPTS);
+
+                    // Determine if it's an Agentic AI concept for different styling
+                    const isAgenticAI = AGENTIC_AI_CONCEPTS.some(c => c.title === concept.title);
+                    const titleColor = isAgenticAI ? '#00FF88' : '#FFFF00';
+                    const categoryLabel = isAgenticAI ? '🤖 AGENTIC AI' : '⚛️ QUANTUM';
+
+                    // Category Label
+                    const category = this.add.text(0, -48, categoryLabel, {
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '9px',
+                        color: isAgenticAI ? '#00CC66' : '#FFCC00',
+                        align: 'center',
+                        fontStyle: 'bold'
+                    }).setOrigin(0.5);
+
+                    // Title Text (Neon)
+                    const title = this.add.text(0, -28, concept.title, {
+                        fontFamily: '"Press Start 2P"',
+                        fontSize: '13px',
+                        color: titleColor,
+                        align: 'center',
+                        stroke: '#000000',
+                        strokeThickness: 3
+                    }).setOrigin(0.5);
+
+                    // Description Text (Readable)
+                    const desc = this.add.text(0, 18, concept.desc, {
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '11px',
+                        color: '#FFFFFF',
+                        align: 'center',
+                        lineSpacing: 3,
+                        fontStyle: 'bold'
+                    }).setOrigin(0.5);
+
+                    // Glow animation for title
+                    this.tweens.add({
+                        targets: title,
+                        alpha: { from: 1, to: 0.7 },
+                        duration: 1200,
+                        yoyo: true,
+                        repeat: -1
+                    });
+
+                    container.add([g, category, title, desc]);
+                }
+
+                // Depth: Behind obstacles (50) but in front of bg buildings (0)
+                container.setDepth(2);
+
+                this.billboards.add(container);
+            }
+
+            collect(player, coin) {
+                this.score += 15;
+                this.scoreTxt.setText(this.score);
+                sound.play('coin');
+
+                const popup = this.add.text(coin.x, coin.y, '+15', {
+                    fontFamily: '"Press Start 2P"', fontSize: '13px', color: '#ffd700', stroke: '#000', strokeThickness: 2
+                }).setOrigin(0.5).setDepth(150);
+
+                this.tweens.add({
+                    targets: popup,
+                    y: popup.y - 40,
+                    alpha: 0,
+                    duration: 450,
+                    onComplete: () => popup.destroy()
+                });
+
+                coin.destroy();
+            }
+
+            getPowerup(player, powerup) {
+                const type = powerup.powerType;
+
+                switch (type) {
+                    case 'shield':
+                        this.invincible = true;
+                        this.player.setTint(0x3498db);
+                        this.time.delayedCall(5000, () => {
+                            this.invincible = false;
+                            this.player.clearTint();
+                        });
+                        this.showPowerupText('SHIELD!', 0x3498db);
+                        break;
+                    case 'heart':
+                        if (this.lives < 5) {
+                            this.lives++;
+                            const heart = this.add.text(W - 40 - ((this.lives - 1) * 30), 20, '❤️', { fontSize: '22px' }).setDepth(200);
+                            this.livesGroup.add(heart);
+                        }
+                        this.showPowerupText('+1 LIFE!', 0xff4444);
+                        break;
+                    case 'magnet':
+                        // Attract coins for 5 seconds
+                        this.showPowerupText('COIN MAGNET!', 0xffd700);
+                        break;
+                }
+
+                this.score += 25;
+                this.scoreTxt.setText(this.score);
+                sound.play('powerup');
+                powerup.destroy();
+            }
+
+            showPowerupText(text, color) {
+                const txt = this.add.text(W / 2, H / 2 - 50, text, {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '20px',
+                    color: Phaser.Display.Color.IntegerToColor(color).rgba,
+                    stroke: '#000',
+                    strokeThickness: 4
+                }).setOrigin(0.5).setDepth(300);
+
+                this.tweens.add({
+                    targets: txt,
+                    y: txt.y - 50,
+                    alpha: 0,
+                    scale: 1.5,
+                    duration: 1000,
+                    onComplete: () => txt.destroy()
+                });
+            }
+
+            hit(player, obstacle) {
+                if (this.gameOver || this.invincible) return;
+
+                // Slide under barriers
+                if (this.sliding && obstacle.obstacleType === 'barrier') return;
+                // Jump over potholes
+                if (this.jumping && obstacle.obstacleType === 'pothole') return;
+
+                this.loseLife();
+            }
+
+            loseLife() {
+                this.lives--;
+                sound.play('hit');
+
+                // Remove heart
+                const hearts = this.livesGroup.getChildren();
+                if (hearts.length > 0) {
+                    hearts[hearts.length - 1].destroy();
+                }
+
+                // Flash effect
+                this.cameras.main.flash(200, 255, 0, 0);
+                this.player.setTint(0xff0000);
+
+                // Brief invincibility
+                this.invincible = true;
+                this.time.delayedCall(1500, () => {
+                    this.invincible = false;
+                    this.player.clearTint();
+                });
+
+                // Blink effect
+                this.tweens.add({
+                    targets: this.player,
+                    alpha: 0.3,
+                    duration: 100,
+                    yoyo: true,
+                    repeat: 7
+                });
+
+                if (this.lives <= 0) {
+                    this.endGame();
+                }
+            }
+
+            endGame() {
+                this.gameOver = true;
+                this.player.stop();
+                this.player.setTint(0xff0000);
+                this.cameras.main.shake(400, 0.03);
+                sound.play('gameover');
+
+                // Stop timers
+                if (this.obstacleTimer) this.obstacleTimer.remove();
+                if (this.coinTimer) this.coinTimer.remove();
+                if (this.powerupTimer) this.powerupTimer.remove();
+
+                // Save scores
+                const hs = parseInt(localStorage.getItem('kejriHS') || 0);
+                if (this.score > hs) localStorage.setItem('kejriHS', this.score);
+
+                const maxLevel = parseInt(localStorage.getItem('kejriMaxLevel') || 1);
+                if (this.currentLevel + 1 > maxLevel) localStorage.setItem('kejriMaxLevel', this.currentLevel + 1);
+
+                this.time.delayedCall(1000, () => this.scene.start('GameOver', {
+                    score: this.score,
+                    level: this.currentLevel + 1,
+                    distance: Math.floor(this.distance)
+                }));
+            }
+
+            levelComplete() {
+                this.gameOver = true;
+                sound.play('levelup');
+
+                // Stop timers
+                if (this.obstacleTimer) this.obstacleTimer.remove();
+                if (this.coinTimer) this.coinTimer.remove();
+                if (this.powerupTimer) this.powerupTimer.remove();
+
+                // Level complete celebration
+                this.cameras.main.flash(500, 0, 255, 0);
+
+                const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.8).setDepth(400);
+
+                const txt1 = this.add.text(W / 2, H / 2 - 40, 'LEVEL COMPLETE!', {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '28px',
+                    color: '#00ff00'
+                }).setOrigin(0.5).setDepth(401);
+
+                const bonus = 100 * (this.currentLevel + 1);
+                this.score += bonus;
+
+                const txt2 = this.add.text(W / 2, H / 2 + 20, `+${bonus} BONUS!`, {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '18px',
+                    color: '#ffd700'
+                }).setOrigin(0.5).setDepth(401);
+
+                // Next level or victory
+                this.time.delayedCall(2500, () => {
+                    if (this.currentLevel + 1 < LEVELS.length) {
+                        this.scene.restart({ level: this.currentLevel + 1, score: this.score, lives: this.lives });
+                    } else {
+                        this.scene.start('Victory', { score: this.score });
+                    }
+                });
+            }
+
+            update() {
+                if (this.gameOver) return;
+
+                // Speed increase
+                if (this.speed < this.levelConfig.maxSpeed) {
+                    this.speed += 0.001;
+                }
+                this.speedTxt.setText((this.speed / this.levelConfig.baseSpeed).toFixed(1) + 'x');
+
+                // Distance and score
+                this.distance += this.speed * 0.03;
+                this.score += Math.floor(this.speed * 0.015);
+                this.scoreTxt.setText(this.score);
+                this.distTxt.setText(Math.floor(this.distance) + 'm');
+
+                // Scroll background
+                if (this.bgBuildings) {
+                    this.bgBuildings.tilePositionX += this.speed * 0.5;
+                }
+
+                // Progress bar
+                const progress = Math.min(this.distance / this.levelConfig.targetDistance, 1);
+                this.progressBar.setScale(progress * 80, 1);
+
+                // Level complete check
+                if (this.distance >= this.levelConfig.targetDistance) {
+                    this.levelComplete();
+                    return;
+                }
+
+                // Road lines animation
+                this.roadLines.forEach(line => {
+                    line.x -= this.speed * 1.2;
+                    if (line.x < -60) line.x = W + 40;
+                });
+
+                // Shadow
+                this.shadow.x = this.player.x;
+                const jh = Math.max(0, GROUND - 35 - this.player.y);
+                this.shadow.setScale(1 - jh / 180, 0.35);
+                this.shadow.setAlpha(Math.max(0.1, 0.4 - jh / 350));
+
+                // Update velocities
+                this.obstacles.getChildren().forEach(o => {
+                    o.body.setVelocityX(-this.speed * 55);
+                    if (o.x < -120) o.destroy();
+                });
+
+                // Move billboards (parallax)
+                this.billboards.getChildren().forEach(b => {
+                    b.x -= this.speed * 0.5;
+                    if (b.x < -200) b.destroy();
+                });
+
+                this.coins.getChildren().forEach(c => {
+                    c.body.setVelocityX(-this.speed * 55);
+                    if (c.x < -40) c.destroy();
+                });
+
+                this.powerups.getChildren().forEach(p => {
+                    p.body.setVelocityX(-this.speed * 55);
+                    if (p.x < -40) p.destroy();
+                });
+            }
+        }
+
+        // ==========================================
+        // GAME OVER SCENE
+        // ==========================================
+        class GameOverScene extends Phaser.Scene {
+            constructor() { super('GameOver'); }
+
+            init(data) {
+                this.finalScore = data.score || 0;
+                this.level = data.level || 1;
+                this.distance = data.distance || 0;
+            }
+
+            create() {
+                this.add.rectangle(W / 2, H / 2, W, H, 0x1a1a2e);
+
+                this.add.text(W / 2, 80, 'GAME OVER', {
+                    fontFamily: '"Press Start 2P"', fontSize: '36px', color: '#ff6b6b', stroke: '#000', strokeThickness: 4
+                }).setOrigin(0.5);
+
+                this.add.text(W / 2, 160, `LEVEL: ${this.level}`, {
+                    fontFamily: '"Press Start 2P"', fontSize: '16px', color: '#87ceeb'
+                }).setOrigin(0.5);
+
+                this.add.text(W / 2, 200, `SCORE: ${this.finalScore}`, {
+                    fontFamily: '"Press Start 2P"', fontSize: '24px', color: '#ffd700'
+                }).setOrigin(0.5);
+
+                this.add.text(W / 2, 240, `DISTANCE: ${this.distance}m`, {
+                    fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#fff'
+                }).setOrigin(0.5);
+
+                const hs = localStorage.getItem('kejriHS') || 0;
+                this.add.text(W / 2, 280, `BEST: ${hs}`, {
+                    fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#aaa'
+                }).setOrigin(0.5);
+
+                if (this.finalScore >= parseInt(hs) && this.finalScore > 0) {
+                    const badge = this.add.text(W / 2, 320, '🏆 NEW HIGH SCORE! 🏆', {
+                        fontFamily: '"Press Start 2P"', fontSize: '12px', color: '#00ff88'
+                    }).setOrigin(0.5);
+                    this.tweens.add({ targets: badge, alpha: 0.4, duration: 300, yoyo: true, repeat: -1 });
+                }
+
+                // Retry button
+                const retryBtn = this.add.rectangle(W / 2 - 100, 400, 150, 50, 0x138808).setInteractive({ useHandCursor: true });
+                this.add.text(W / 2 - 100, 400, 'RETRY', { fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#fff' }).setOrigin(0.5);
+                retryBtn.on('pointerdown', () => this.scene.start('Game', { level: 0 }));
+
+                // Menu button
+                const menuBtn = this.add.rectangle(W / 2 + 100, 400, 150, 50, 0xff9933).setInteractive({ useHandCursor: true });
+                this.add.text(W / 2 + 100, 400, 'MENU', { fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#fff' }).setOrigin(0.5);
+                menuBtn.on('pointerdown', () => this.scene.start('Menu'));
+
+                this.input.keyboard.on('keydown-SPACE', () => this.scene.start('Game', { level: 0 }));
+            }
+        }
+
+        // ==========================================
+        // VICTORY SCENE
+        // ==========================================
+        class VictoryScene extends Phaser.Scene {
+            constructor() { super('Victory'); }
+
+            init(data) {
+                this.finalScore = data.score || 0;
+            }
+
+            create() {
+                // Celebration background
+                const bg = this.add.graphics();
+                bg.fillGradientStyle(0x2ecc71, 0x27ae60, 0x1abc9c, 0x16a085);
+                bg.fillRect(0, 0, W, H);
+
+                this.add.text(W / 2, 80, '🎉 YOU WIN! 🎉', {
+                    fontFamily: '"Press Start 2P"', fontSize: '32px', color: '#ffd700', stroke: '#000', strokeThickness: 4
+                }).setOrigin(0.5);
+
+                this.add.text(W / 2, 140, 'ALL LEVELS COMPLETE!', {
+                    fontFamily: '"Press Start 2P"', fontSize: '16px', color: '#fff'
+                }).setOrigin(0.5);
+
+                this.add.text(W / 2, 200, `FINAL SCORE: ${this.finalScore}`, {
+                    fontFamily: '"Press Start 2P"', fontSize: '24px', color: '#ffd700'
+                }).setOrigin(0.5);
+
+                // Save high score
+                const hs = parseInt(localStorage.getItem('kejriHS') || 0);
+                if (this.finalScore > hs) {
+                    localStorage.setItem('kejriHS', this.finalScore);
+                }
+
+                this.add.text(W / 2, 260, 'Thanks for playing!', {
+                    fontFamily: 'Poppins', fontSize: '18px', color: '#fff'
+                }).setOrigin(0.5);
+
+                // Play again button
+                const btn = this.add.rectangle(W / 2, 350, 200, 55, 0x138808).setInteractive({ useHandCursor: true });
+                this.add.text(W / 2, 350, 'PLAY AGAIN', { fontFamily: '"Press Start 2P"', fontSize: '14px', color: '#fff' }).setOrigin(0.5);
+                btn.on('pointerdown', () => this.scene.start('Menu'));
+
+                this.input.keyboard.on('keydown-SPACE', () => this.scene.start('Menu'));
+
+                // Confetti particles
+                for (let i = 0; i < 50; i++) {
+                    const x = Phaser.Math.Between(0, W);
+                    const color = Phaser.Math.RND.pick([0xffd700, 0xff6b6b, 0x3498db, 0x2ecc71, 0xff9933]);
+                    const particle = this.add.rectangle(x, -20, 8, 8, color);
+
+                    this.tweens.add({
+                        targets: particle,
+                        y: H + 50,
+                        x: x + Phaser.Math.Between(-100, 100),
+                        rotation: Phaser.Math.Between(0, 10),
+                        duration: Phaser.Math.Between(2000, 4000),
+                        delay: Phaser.Math.Between(0, 2000),
+                        repeat: -1
+                    });
+                }
+            }
+        }
+
+        // ==========================================
+        // INITIALIZE
+        // ==========================================
+        window.addEventListener('load', () => {
+            new Phaser.Game({
+                type: Phaser.AUTO,
+                width: W,
+                height: H,
+                parent: 'game-container',
+                backgroundColor: '#1a1a2e',
+                physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+                scene: [MenuScene, GameScene, GameOverScene, VictoryScene],
+                scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }
+            });
+            window.addEventListener('keydown', e => { if (e.code === 'Space') e.preventDefault(); });
+        });
+    </script>
+</body>
+
+</html>
