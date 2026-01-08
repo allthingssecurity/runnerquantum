@@ -1316,38 +1316,38 @@
                 if (this.gameOver) return;
 
                 // Spawn high up in the background
-                const y = GROUND - 280;
-                const container = this.add.container(W + 200, y);
+                const y = GROUND - 300;
+                const container = this.add.container(W + 220, y);
 
-                const w = 320, h = 130;
+                const w = 380, h = 160; // Bigger billboard
                 const g = this.add.graphics();
 
                 // Support Legs (Rooftop style)
                 g.fillStyle(0x333333);
-                g.fillRect(-w / 2 + 20, h / 2, 10, 50);
-                g.fillRect(w / 2 - 30, h / 2, 10, 50);
+                g.fillRect(-w / 2 + 20, h / 2, 12, 60);
+                g.fillRect(w / 2 - 32, h / 2, 12, 60);
                 // Cross bracing
-                g.lineStyle(2, 0x333333);
-                g.lineBetween(-w / 2 + 20, h / 2, w / 2 - 30, h / 2 + 50);
-                g.lineBetween(-w / 2 + 20, h / 2 + 50, w / 2 - 30, h / 2);
+                g.lineStyle(3, 0x333333);
+                g.lineBetween(-w / 2 + 20, h / 2, w / 2 - 32, h / 2 + 60);
+                g.lineBetween(-w / 2 + 20, h / 2 + 60, w / 2 - 32, h / 2);
 
                 // Main Board Frame with gradient effect
                 g.fillStyle(0x0a1628);
-                g.fillRoundedRect(-w / 2, -h / 2, w, h, 8);
-                g.lineStyle(4, 0x3366ff);
-                g.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
+                g.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
+                g.lineStyle(5, 0x3366ff);
+                g.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
 
                 // Inner glow border
-                g.lineStyle(2, 0x00ffff, 0.3);
-                g.strokeRoundedRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 6);
+                g.lineStyle(2, 0x00ffff, 0.4);
+                g.strokeRoundedRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10, 8);
 
-                // Decide if showing logo or concept (30% chance for logo)
-                const showLogo = Math.random() < 0.6; // 60% chance for AIQNex branding
+                // Decide if showing logo or concept (60% chance for logo)
+                const showLogo = Math.random() < 0.6;
 
                 if (showLogo) {
                     // Display AIQNEX Logo prominently
                     const logo = this.add.image(0, -5, 'aiqnex_logo');
-                    logo.setDisplaySize(w - 30, h - 30);
+                    logo.setDisplaySize(w - 40, h - 40);
 
                     // Pulsing glow effect for logo
                     this.tweens.add({
@@ -1370,39 +1370,41 @@
                     const titleColor = isAgenticAI ? '#00FF88' : '#FFFF00';
                     const categoryLabel = isAgenticAI ? '🤖 AGENTIC AI' : '⚛️ QUANTUM';
 
-                    // Category Label
-                    const category = this.add.text(0, -48, categoryLabel, {
+                    // Category Label - Bigger
+                    const category = this.add.text(0, -58, categoryLabel, {
                         fontFamily: 'Poppins, sans-serif',
-                        fontSize: '9px',
+                        fontSize: '12px',
                         color: isAgenticAI ? '#00CC66' : '#FFCC00',
                         align: 'center',
                         fontStyle: 'bold'
                     }).setOrigin(0.5);
 
-                    // Title Text (Neon)
-                    const title = this.add.text(0, -28, concept.title, {
+                    // Title Text (Neon) - Bigger & Clearer
+                    const title = this.add.text(0, -32, concept.title, {
                         fontFamily: '"Press Start 2P"',
-                        fontSize: '13px',
+                        fontSize: '16px',
                         color: titleColor,
                         align: 'center',
                         stroke: '#000000',
-                        strokeThickness: 3
+                        strokeThickness: 4
                     }).setOrigin(0.5);
 
-                    // Description Text (Readable)
-                    const desc = this.add.text(0, 18, concept.desc, {
+                    // Description Text - Bigger & Clearer
+                    const desc = this.add.text(0, 22, concept.desc, {
                         fontFamily: 'Poppins, sans-serif',
-                        fontSize: '11px',
+                        fontSize: '14px',
                         color: '#FFFFFF',
                         align: 'center',
-                        lineSpacing: 3,
-                        fontStyle: 'bold'
+                        lineSpacing: 4,
+                        fontStyle: 'bold',
+                        stroke: '#000000',
+                        strokeThickness: 2
                     }).setOrigin(0.5);
 
                     // Glow animation for title
                     this.tweens.add({
                         targets: title,
-                        alpha: { from: 1, to: 0.7 },
+                        alpha: { from: 1, to: 0.75 },
                         duration: 1200,
                         yoyo: true,
                         repeat: -1
